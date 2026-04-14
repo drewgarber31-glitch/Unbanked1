@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Survey — Your Banking Experience</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0f1f35;
+    --teal: #0a9b87;
+    --teal-light: #0dc4ab;
+    --cream: #f5f0e8;
+    --warm-white: #fdfaf5;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --card: #ffffff;
+    --progress-h: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(10,155,135,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(10,155,135,0.10) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .survey-shell {
+    width: 100%;
+    max-width: 620px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Progress bar */
+  .progress-bar-wrap {
+    width: 100%;
+    height: var(--progress-h);
+    background: rgba(255,255,255,0.12);
+    border-radius: 99px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--teal-light));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  .step-counter {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal-light);
+    margin-bottom: 8px;
+    opacity: 0.85;
+  }
+
+  /* Card */
+  .card {
+    background: var(--warm-white);
+    border-radius: 20px;
+    padding: 48px 44px 44px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06);
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    animation: slideUp 0.45s cubic-bezier(.4,0,.2,1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .question-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--navy);
+    line-height: 1.35;
+    margin-bottom: 28px;
+  }
+
+  .question-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: -18px;
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border: 2px solid #e5e0d8;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 400;
+    text-align: left;
+    user-select: none;
+  }
+
+  .option:hover {
+    border-color: var(--teal);
+    background: rgba(10,155,135,0.04);
+    transform: translateX(3px);
+  }
+
+  .option.selected {
+    border-color: var(--teal);
+    background: rgba(10,155,135,0.07);
+    color: var(--navy);
+    font-weight: 500;
+  }
+
+  .option-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid #d1ccc3;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .option.selected .option-dot {
+    border-color: var(--teal);
+    background: var(--teal);
+  }
+
+  .option.selected .option-dot::after {
+    content: '';
+    width: 8px; height: 8px;
+    background: white;
+    border-radius: 50%;
+  }
+
+  /* Multi select */
+  .option-check {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid #d1ccc3;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .option.selected .option-check {
+    border-color: var(--teal);
+    background: var(--teal);
+  }
+
+  .option.selected .option-check::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* Text input */
+  .text-input {
+    width: 100%;
+    padding: 16px 18px;
+    border: 2px solid #e5e0d8;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    background: #fff;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 110px;
+  }
+
+  .text-input:focus { border-color: var(--teal); }
+
+  /* Scale */
+  .scale-wrap { display: flex; gap: 8px; }
+  .scale-btn {
+    flex: 1;
+    padding: 14px 0;
+    border: 2px solid #e5e0d8;
+    border-radius: 10px;
+    background: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .scale-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .scale-btn.selected {
+    border-color: var(--teal);
+    background: var(--teal);
+    color: white;
+  }
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* Nav */
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; }
+
+  .btn-next {
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(10,155,135,0.35);
+    letter-spacing: 0.01em;
+  }
+
+  .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(10,155,135,0.45); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-back {
+    padding: 14px 20px;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .btn-back:hover { color: var(--navy); }
+
+  /* Thank you screen */
+  .thankyou {
+    text-align: center;
+    padding: 20px 0;
+    animation: slideUp 0.5s ease both;
+  }
+
+  .thankyou-icon {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-light));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    font-size: 32px;
+    box-shadow: 0 8px 32px rgba(10,155,135,0.4);
+  }
+
+  .thankyou h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    color: var(--navy);
+    margin-bottom: 14px;
+  }
+
+  .thankyou p {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .results-summary {
+    margin-top: 32px;
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: left;
+  }
+
+  .results-summary h3 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 14px;
+  }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--text);
+    padding: 7px 0;
+    border-bottom: 1px solid #e8e2d8;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-val { font-weight: 600; color: var(--navy); text-align: right; max-width: 60%; }
+
+  .branding {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.05em;
+  }
+
+  @media (max-width: 500px) {
+    .card { padding: 32px 24px 28px; }
+    .question-label { font-size: 21px; }
+    .scale-wrap { gap: 5px; }
+    .scale-btn { font-size: 14px; padding: 12px 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="survey-shell">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="card" id="surveyCard">
+    <div id="questionArea"></div>
+    <div class="nav">
+      <button class="btn-back" id="btnBack" onclick="goBack()" style="visibility:hidden">← Back</button>
+      <button class="btn-next" id="btnNext" onclick="goNext()" disabled>Continue →</button>
+    </div>
+  </div>
+
+  <div class="branding">UNBANKED — Market Research Survey</div>
+</div>
+
+<script>
+const questions = [
+  {
+    id: 'q1',
+    type: 'single',
+    label: 'Do you currently have a bank account?',
+    options: [
+      'Yes, a traditional bank account',
+      'Yes, but only a prepaid card or app like Cash App',
+      'No, I don\'t have any bank account',
+      'I have an account but rarely use it'
+    ]
+  },
+  {
+    id: 'q2',
+    type: 'single',
+    label: 'How do you usually cash your checks?',
+    options: [
+      'Direct deposit to my bank',
+      'Check cashing store (pay a fee)',
+      'Cash App, Chime, or similar app',
+      'I ask someone else to cash them for me',
+      'I don\'t receive checks'
+    ]
+  },
+  {
+    id: 'q3',
+    type: 'single',
+    label: 'About how much do you spend per month on check cashing or money transfer fees?',
+    options: [
+      '$0 — I don\'t pay fees',
+      '$1–$10',
+      '$11–$30',
+      '$31–$60',
+      'More than $60'
+    ]
+  },
+  {
+    id: 'q4',
+    type: 'multi',
+    label: 'What are your biggest frustrations with your current financial setup?',
+    sub: 'Select all that apply.',
+    options: [
+      'Too many fees',
+      'Hard to build credit',
+      'Don\'t trust apps with my money',
+      'No SSN or limited ID options',
+      'Can\'t get cash quickly when I need it',
+      'Language barrier / app not in my language',
+      'No physical location I can walk into',
+      'Bad customer service'
+    ]
+  },
+  {
+    id: 'q5',
+    type: 'scale',
+    label: 'How much do you trust financial apps like Cash App or Chime?',
+    low: 'No trust at all',
+    high: 'Completely trust them'
+  },
+  {
+    id: 'q6',
+    type: 'single',
+    label: 'Would you be more likely to try a new financial app if there was a real store location in your neighborhood where you could get help in person?',
+    options: [
+      'Yes, definitely — the store would make me feel safe',
+      'Maybe — it would help but I\'d still want to research it',
+      'Not really — I decide based on the app itself',
+      'No — I stick to what I already use'
+    ]
+  },
+  {
+    id: 'q7',
+    type: 'single',
+    label: 'If a new app charged only 1% to cash your check instantly (compared to 3–5% at most stores), would you switch?',
+    options: [
+      'Yes, I\'d switch immediately',
+      'Yes, but I\'d want to try it first',
+      'Maybe — I\'d need to trust it first',
+      'No — price isn\'t my main concern',
+      'I don\'t use check cashing services'
+    ]
+  },
+  {
+    id: 'q8',
+    type: 'single',
+    label: 'Would you be interested in an affordable phone plan ($25/month unlimited) bundled with a free financial app?',
+    options: [
+      'Yes — that\'s a great deal',
+      'Maybe — depends on the network quality',
+      'I already have a plan I\'m happy with',
+      'No, not interested'
+    ]
+  },
+  {
+    id: 'q9',
+    type: 'single',
+    label: 'What is your primary language at home?',
+    options: [
+      'English',
+      'Spanish',
+      'Haitian Creole',
+      'Portuguese',
+      'Other'
+    ]
+  },
+  {
+    id: 'q10',
+    type: 'text',
+    label: 'What\'s the one thing you wish your bank or financial app did better?',
+    sub: 'Any answer helps — even just a few words.',
+    placeholder: 'Type your answer here...'
+  }
+];
+
+let current = 0;
+let answers = {};
+
+function render() {
+  const q = questions[current];
+  const area = document.getElementById('questionArea');
+  const btnNext = document.getElementById('btnNext');
+  const btnBack = document.getElementById('btnBack');
+  const fill = document.getElementById('progressFill');
+
+  fill.style.width = ((current / questions.length) * 100) + '%';
+  btnBack.style.visibility = current > 0 ? 'visible' : 'hidden';
+  btnNext.disabled = true;
+
+  // Animate card
+  const card = document.getElementById('surveyCard');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'slideUp 0.4s cubic-bezier(.4,0,.2,1) both';
+
+  let html = '<div class="step-counter">Question ' + (current + 1) + ' of ' + questions.length + '</div>';
+  html += '<div class="question-label">' + q.label + '</div>';
+  if (q.sub) html += '<div class="question-sub">' + q.sub + '</div>';
+
+  if (q.type === 'single') {
+    html += '<div class="options">';
+    q.options.forEach(function(opt, i) {
+      const sel = answers[q.id] === opt ? ' selected' : '';
+      html += '<button class="option' + sel + '" onclick="selectSingle(\'' + q.id + '\', this, \'' + opt.replace(/'/g, "\\'") + '\')">'
+            + '<span class="option-dot"></span>' + opt + '</button>';
+    });
+    html += '</div>';
+  } else if (q.type === 'multi') {
+    html += '<div class="options">';
+    q.options.forEach(function(opt) {
+      const stored = answers[q.id] || [];
+      const sel = stored.includes(opt) ? ' selected' : '';
+      html += '<button class="option' + sel + '" onclick="selectMulti(\'' + q.id + '\', this, \'' + opt.replace(/'/g, "\\'") + '\')">'
+            + '<span class="option-check"></span>' + opt + '</button>';
+    });
+    html += '</div>';
+  } else if (q.type === 'scale') {
+    html += '<div class="scale-wrap">';
+    for (let n = 1; n <= 5; n++) {
+      const sel = answers[q.id] == n ? ' selected' : '';
+      html += '<button class="scale-btn' + sel + '" onclick="selectScale(\'' + q.id + '\', this, ' + n + ')">' + n + '</button>';
+    }
+    html += '</div>';
+    html += '<div class="scale-labels"><span>' + q.low + '</span><span>' + q.high + '</span></div>';
+  } else if (q.type === 'text') {
+    const val = answers[q.id] || '';
+    html += '<textarea class="text-input" id="textInput" placeholder="' + q.placeholder + '" oninput="handleText(\'' + q.id + '\')">' + val + '</textarea>';
+  }
+
+  area.innerHTML = html;
+
+  // Restore next button state
+  if (answers[q.id] !== undefined && answers[q.id] !== '' &&
+      !(Array.isArray(answers[q.id]) && answers[q.id].length === 0)) {
+    btnNext.disabled = false;
+  }
+
+  // Focus text area
+  if (q.type === 'text') {
+    setTimeout(function() {
+      const ta = document.getElementById('textInput');
+      if (ta) { ta.focus(); btnNext.disabled = false; } // text is optional
+    }, 100);
+  }
+
+  btnNext.textContent = current === questions.length - 1 ? 'Submit →' : 'Continue →';
+}
+
+function selectSingle(id, el, val) {
+  answers[id] = val;
+  document.querySelectorAll('.option').forEach(function(o) { o.classList.remove('selected'); });
+  el.classList.add('selected');
+  document.getElementById('btnNext').disabled = false;
+}
+
+function selectMulti(id, el, val) {
+  if (!answers[id]) answers[id] = [];
+  const idx = answers[id].indexOf(val);
+  if (idx > -1) { answers[id].splice(idx, 1); el.classList.remove('selected'); }
+  else { answers[id].push(val); el.classList.add('selected'); }
+  document.getElementById('btnNext').disabled = answers[id].length === 0;
+}
+
+function selectScale(id, el, val) {
+  answers[id] = val;
+  document.querySelectorAll('.scale-btn').forEach(function(b) { b.classList.remove('selected'); });
+  el.classList.add('selected');
+  document.getElementById('btnNext').disabled = false;
+}
+
+function handleText(id) {
+  answers[id] = document.getElementById('textInput').value;
+  document.getElementById('btnNext').disabled = false;
+}
+
+function goNext() {
+  const q = questions[current];
+  if (q.type === 'text') answers[q.id] = (document.getElementById('textInput') || {}).value || '';
+  if (current < questions.length - 1) { current++; render(); }
+  else { showThankYou(); }
+}
+
+function goBack() {
+  if (current > 0) { current--; render(); }
+}
+
+function showThankYou() {
+  const fill = document.getElementById('progressFill');
+  fill.style.width = '100%';
+
+  const frust = (answers['q4'] || []).slice(0, 3).join(', ') || 'N/A';
+  const trust = answers['q5'] ? answers['q5'] + ' / 5' : 'N/A';
+  const lang = answers['q9'] || 'N/A';
+  const store = answers['q6'] || 'N/A';
+
+  const card = document.getElementById('surveyCard');
+  card.style.animation = 'none'; card.offsetHeight;
+  card.style.animation = 'slideUp 0.45s cubic-bezier(.4,0,.2,1) both';
+
+  card.innerHTML = '<div class="thankyou">'
+    + '<div class="thankyou-icon">✓</div>'
+    + '<h2>Thank you!</h2>'
+    + '<p>Your feedback directly shapes a new financial platform being built for communities like yours. We really appreciate your time.</p>'
+    + '<div class="results-summary">'
+    + '<h3>Your Responses at a Glance</h3>'
+    + '<div class="result-row"><span>Trust score</span><span class="result-val">' + trust + '</span></div>'
+    + '<div class="result-row"><span>Main frustrations</span><span class="result-val">' + frust + '</span></div>'
+    + '<div class="result-row"><span>In-store presence matters?</span><span class="result-val">' + store.split('—')[0].trim() + '</span></div>'
+    + '<div class="result-row"><span>Primary language</span><span class="result-val">' + lang + '</span></div>'
+    + '</div></div>';
+}
+
+render();
+</script>
+</body>
+</html>
